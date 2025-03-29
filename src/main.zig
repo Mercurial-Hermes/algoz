@@ -25,6 +25,7 @@ fn printArray(comptime T: type, array: []const T) void {
 
 pub fn main() !void {
     const sizes = [_]usize{ 1000, 50000, 100000, 150000, 200000 };
+    const max_width = 40; // Maximum width for each bar
     
     for (sizes) |size| {
         std.debug.print("\nTesting array size: {d}\n", .{size});
@@ -33,9 +34,6 @@ pub fn main() !void {
         const array = try generateRandomArray(i32, size);
         defer std.heap.page_allocator.free(array);
         
-        // std.debug.print("Original array: ", .{});
-        // printArray(i32, array);
-        
         // Measure sorting time
         const start = std.time.milliTimestamp();
         insertion_sort.insertion_sort(i32, array);
@@ -43,11 +41,24 @@ pub fn main() !void {
         const duration = @as(f64, @floatFromInt(end - start));
         
         const n_squared = @as(f64, @floatFromInt(size * size));
-        std.debug.print("Time taken: {d:.2} ms\n", .{duration});
-        std.debug.print("n²: {d:.2}\n", .{n_squared});
-        std.debug.print("Time/n²: {d:.6} ms\n", .{duration / n_squared});
+        const time_per_n2 = duration / n_squared;
         
-        // std.debug.print("Sorted array: ", .{});
-        // printArray(i32, array);
+        // Create visualizations
+        const time_bars = @as(usize, @intFromFloat(duration / 100.0));
+        const n2_bars = @as(usize, @intFromFloat(n_squared / 1000000.0)); // Scale n² down for visualization
+        
+        std.debug.print("Time: {d:>8.1f} ms |", .{duration});
+        for (0..@min(time_bars, max_width)) |_| {
+            std.debug.print("█", .{});
+        }
+        std.debug.print("\n", .{});
+        
+        std.debug.print("n²:   {d:>8.1f} |", .{n_squared});
+        for (0..@min(n2_bars, max_width)) |_| {
+            std.debug.print("░", .{});
+        }
+        std.debug.print("\n", .{});
+        
+        std.debug.print("Time/n²: {d:.6f} ms\n", .{time_per_n2});
     }
 }
